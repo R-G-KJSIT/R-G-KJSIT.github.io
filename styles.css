@@ -1,0 +1,14 @@
+body {
+    background-color: black; /* Set black background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full viewport height */
+    margin: 0;
+}
+
+#intro-video {
+    width: 80%; /* Scale video to 80% */
+    max-width: 100%;
+    height: auto;
+}
