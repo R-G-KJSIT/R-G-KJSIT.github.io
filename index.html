@@ -387,7 +387,8 @@
         const gameOverOverlay = document.getElementById('gameOver');
         const finalScoreElement = document.getElementById('finalScore');
 
-        context.scale(20, 20);
+        // NOTE: We do NOT set context.scale(20, 20) here anymore.
+        // It is set inside the draw loop to be persistent against context loss.
 
         function arenaSweep() {
             let rowCount = 1;
@@ -501,8 +502,16 @@
         }
 
         function draw() {
+            // FIX: Reset transform first to clear canvas using physical pixels
+            // This ensures we always start from a known state (identity matrix)
+            context.setTransform(1, 0, 0, 1, 0, 0);
+            
             context.fillStyle = '#000';
             context.fillRect(0, 0, canvas.width, canvas.height);
+
+            // FIX: Re-apply scale every frame
+            // This fixes the "miniscule game" bug if browser resets context
+            context.scale(20, 20);
 
             drawMatrix(arena, {x: 0, y: 0});
             drawMatrix(player.matrix, player.pos);
@@ -604,7 +613,13 @@
             if(!isPaused) {
                 const deltaTime = time - lastTime;
                 lastTime = time;
-                dropCounter += deltaTime;
+                
+                // Fix: Cap the delta time to avoid large jumps if the user tabs out and back in
+                // If the gap is larger than 1.5 seconds, we assume they were away and ignore that duration
+                if (deltaTime < 1500) {
+                    dropCounter += deltaTime;
+                }
+                
                 if (dropCounter > dropInterval) {
                     playerDrop();
                 }
