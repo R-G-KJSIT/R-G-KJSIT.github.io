@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>R Landing (You aren't meant to be here)</title>
     <style>
         :root {
@@ -12,7 +12,7 @@
             --text-primary: #ff0055;
             --text-secondary: #00e5ff;
             --accent: #ffee00;
-            --glass: rgba(20, 20, 20, 0.8);
+            --glass: rgba(20, 20, 20, 0.85);
             --border: 1px solid rgba(255, 255, 255, 0.1);
             --font-main: 'Courier New', Courier, monospace;
             --scanline: rgba(0,0,0,0.5);
@@ -35,7 +35,7 @@
             --text-primary: #ff71ce;
             --text-secondary: #01cdfe;
             --accent: #fffb96;
-            --glass: rgba(255, 255, 255, 0.1);
+            --glass: rgba(255, 255, 255, 0.15);
             --border: 1px solid rgba(255, 113, 206, 0.5);
             --font-main: sans-serif;
         }
@@ -44,7 +44,8 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -56,11 +57,13 @@
             color: var(--text-primary);
             font-family: var(--font-main);
             height: 100vh;
-            overflow: hidden;
+            width: 100vw;
+            overflow: hidden; /* Prevent scroll */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
+            touch-action: none; /* Disable browser gestures */
         }
 
         /* Scanline Overlay */
@@ -81,25 +84,26 @@
         /* Top Header Section */
         header {
             text-align: center;
-            padding: 2rem 1rem 1rem;
+            padding: 1.5rem 1rem 0.5rem;
             z-index: 10;
             width: 100%;
             max-width: 800px;
+            flex-shrink: 0;
         }
 
         h1 {
-            font-size: clamp(2rem, 5vw, 4rem);
+            font-size: clamp(1.5rem, 5vw, 4rem);
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: -2px;
             color: var(--text-primary);
             text-shadow: 2px 2px 0px var(--text-secondary);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.2rem;
             animation: glitch 3s infinite;
         }
 
         p.subtitle {
-            font-size: clamp(0.9rem, 2vw, 1.2rem);
+            font-size: clamp(0.7rem, 2vw, 1rem);
             color: var(--text-secondary);
             opacity: 0.8;
             letter-spacing: 1px;
@@ -119,6 +123,7 @@
             font-family: inherit;
             font-weight: bold;
             backdrop-filter: blur(4px);
+            font-size: 0.8rem;
         }
 
         .theme-toggle:hover {
@@ -133,8 +138,10 @@
             align-items: flex-start;
             justify-content: center;
             z-index: 10;
-            padding-bottom: 2rem;
-            flex-wrap: wrap;
+            padding-bottom: 1rem;
+            flex-grow: 1;
+            width: 100%;
+            max-width: 600px;
         }
 
         .canvas-wrapper {
@@ -142,18 +149,23 @@
             padding: 4px;
             background: var(--text-secondary);
             box-shadow: 0 0 20px var(--text-secondary);
+            flex-shrink: 1;
         }
 
         canvas {
             display: block;
             background-color: #000;
+            max-height: 60vh; /* Ensure it fits on mobile screens vertically */
+            height: auto;
+            width: auto;
+            aspect-ratio: 240/400;
         }
 
         .sidebar {
             display: flex;
             flex-direction: column;
             gap: 15px;
-            min-width: 150px;
+            min-width: 120px;
         }
 
         .score-board {
@@ -190,41 +202,68 @@
         .mobile-controls {
             display: none;
             width: 100%;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 10px;
-            z-index: 20;
+            max-width: 500px;
+            justify-content: space-between;
+            padding: 0 20px 20px;
+            position: fixed;
+            bottom: 0;
+            z-index: 100;
+            pointer-events: none; /* Let clicks pass through container area */
+        }
+
+        .control-group {
+            display: flex;
+            gap: 12px;
+            pointer-events: auto; /* Re-enable clicks for buttons */
         }
 
         .m-btn {
             background: var(--glass);
             border: var(--border);
             color: var(--text-secondary);
-            width: 50px;
-            height: 50px;
-            font-size: 1.2rem;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
+            border-radius: 8px; /* Slightly rounded for tech feel */
             user-select: none;
             cursor: pointer;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            touch-action: none; /* Vital: prevents zoom/scroll on rapid tapping */
         }
+        
         .m-btn:active {
             background: var(--text-secondary);
+            color: var(--bg-color);
+            transform: translateY(2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        /* Highlight rotation button slightly */
+        #btn-rotate {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        #btn-rotate:active {
+            background: var(--accent);
             color: var(--bg-color);
         }
 
         .game-over-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85);
+            background: rgba(0,0,0,0.9);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             color: white;
             display: none;
+            z-index: 20;
+            backdrop-filter: blur(2px);
         }
 
         .game-over-overlay.visible {
@@ -233,13 +272,16 @@
 
         .btn-restart {
             margin-top: 15px;
-            padding: 10px 20px;
+            padding: 12px 24px;
             font-family: inherit;
             background: var(--text-primary);
             border: none;
             color: white;
             font-weight: bold;
+            font-size: 1rem;
             cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         /* Glitch Animation */
@@ -252,7 +294,7 @@
             100% { transform: translate(0); }
         }
 
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
             .game-container {
                 flex-direction: column;
                 align-items: center;
@@ -260,11 +302,18 @@
             .sidebar {
                 flex-direction: row;
                 width: 100%;
-                justify-content: space-between;
+                justify-content: center;
+                gap: 20px;
                 min-width: auto;
             }
-            .controls-info { display: none; } /* Hide keyboard info on mobile */
+            /* Hide desktop instructions, show mobile UI */
+            .controls-info { display: none; }
             .mobile-controls { display: flex; }
+            
+            /* Adjust canvas wrapper margins */
+            .canvas-wrapper {
+                margin-bottom: 10px;
+            }
         }
     </style>
 </head>
@@ -273,23 +322,23 @@
     <button class="theme-toggle" id="themeBtn">Cycle Theme</button>
 
     <header>
-        <h1>Wrong Domain bruv</h1>
-        <p class="subtitle">if you're here anyway, play this to waste your time</p>
+        <h1>Wrong Domain</h1>
+        <p class="subtitle">System error. Game initialized.</p>
     </header>
 
     <div class="game-container">
         <div class="canvas-wrapper">
             <canvas id="tetris" width="240" height="400"></canvas>
             <div class="game-over-overlay" id="gameOver">
-                <h2>GAME OVER</h2>
-                <div id="finalScore">Score: 0</div>
-                <button class="btn-restart" onclick="playerReset()">Try Again</button>
+                <h2>SYSTEM FAILURE</h2>
+                <div id="finalScore" style="margin: 10px 0; font-size: 1.2rem; color: var(--accent);">Score: 0</div>
+                <button class="btn-restart" onclick="playerReset()">Reboot</button>
             </div>
         </div>
 
         <div class="sidebar">
             <div class="score-board">
-                <div class="label">Score</div>
+                <div class="label">Buffer</div>
                 <div class="score" id="score">0</div>
             </div>
             
@@ -302,12 +351,16 @@
         </div>
     </div>
 
-    <!-- Mobile Controls -->
+    <!-- Mobile Controls (D-Pad Style) -->
     <div class="mobile-controls">
-        <div class="m-btn" ontouchstart="playerMove(-1)">←</div>
-        <div class="m-btn" ontouchstart="playerRotate(1)">↻</div>
-        <div class="m-btn" ontouchstart="playerDrop()">↓</div>
-        <div class="m-btn" ontouchstart="playerMove(1)">→</div>
+        <div class="control-group">
+            <div class="m-btn" id="btn-left">←</div>
+            <div class="m-btn" id="btn-down">↓</div>
+            <div class="m-btn" id="btn-right">→</div>
+        </div>
+        <div class="control-group">
+            <div class="m-btn" id="btn-rotate">↻</div>
+        </div>
     </div>
 
     <script>
@@ -436,12 +489,9 @@
             matrix.forEach((row, y) => {
                 row.forEach((value, x) => {
                     if (value !== 0) {
-                        // Dynamic color based on CSS variables if possible, but canvas needs strict Hex/RGB usually
-                        // We stick to bright neon colors to fit all themes
                         context.fillStyle = colors[value];
                         context.fillRect(x + offset.x, y + offset.y, 1, 1);
                         
-                        // Add a small inner bevel effect
                         context.lineWidth = 0.05;
                         context.strokeStyle = 'rgba(255,255,255,0.5)';
                         context.strokeRect(x + offset.x, y + offset.y, 1, 1);
@@ -451,7 +501,6 @@
         }
 
         function draw() {
-            // Clear canvas
             context.fillStyle = '#000';
             context.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -525,6 +574,8 @@
             } else {
                 gameOverOverlay.classList.remove('visible');
                 isPaused = false;
+                // Ensure we run update loop if it stopped
+                if(!animationId) update();
             }
         }
 
@@ -547,6 +598,7 @@
         let dropInterval = 1000;
         let lastTime = 0;
         let isPaused = false;
+        let animationId = null;
 
         function update(time = 0) {
             if(!isPaused) {
@@ -557,8 +609,8 @@
                     playerDrop();
                 }
                 draw();
+                animationId = requestAnimationFrame(update);
             }
-            requestAnimationFrame(update);
         }
 
         function updateScore() {
@@ -571,6 +623,8 @@
             matrix: null,
             score: 0,
         };
+
+        // --- CONTROLS ---
 
         // Keyboard Controls
         document.addEventListener('keydown', event => {
@@ -585,6 +639,26 @@
                 playerRotate(1);
             }
         });
+
+        // Mobile Controls
+        // We use addEventListener to allow preventDefault (stops scrolling/zooming)
+        function setupMobileBtn(id, action) {
+            const btn = document.getElementById(id);
+            if(!btn) return;
+            
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault(); // Stop scroll/zoom
+                if(!isPaused) action();
+            }, {passive: false});
+
+            // Prevent default click behavior as well
+            btn.addEventListener('click', (e) => e.preventDefault());
+        }
+
+        setupMobileBtn('btn-left', () => playerMove(-1));
+        setupMobileBtn('btn-right', () => playerMove(1));
+        setupMobileBtn('btn-down', () => playerDrop());
+        setupMobileBtn('btn-rotate', () => playerRotate(1));
 
         // Initialize
         playerReset();
